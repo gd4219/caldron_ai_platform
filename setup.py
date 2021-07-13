@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="dg_ai_platform",
-    version="0.1.14",
+    version="0.1.15",
     author="Caldron Tech",
     author_email="support@caldrontech.com",
     description="A AI container platform.",
