@@ -11,7 +11,6 @@ class HelloWorld(ITaskProcess):
         img1.save(output_list[0])
 
 
-
 class HelloWorld21(ITaskProcess):
     def __init__(self):
         super().__init__()

@@ -6,18 +6,19 @@ version 0.1.13
 ## How to run hello world demo
 ##### 1. pip install dg-ai-platform.
 ##### 2. Login to Caldron AI platform website.
-##### 3. You will see a demo app with PID and public key.
-##### 4. Paste below code to a blank python file and change #pid# to your demo PID.
+##### 3. You will see a HelloWorld app with PID and public key.
+##### 4. Paste following code to a blank python file and change #pid# to your demo PID.
 ##### 5. run this python file.
 ```bash 
 from dg_ai_platform.example import HelloWorld
 from dg_ai_platform.dg_platform import CaldronAI
 
-ca = CaldronAI(#pid#, #public_key#, HelloWorld)
+ca = CaldronAI(HelloWorld, pid="xxxx", public_key="xxxx")
 ca.run()
 ```
-##### 6. Create your task in demo task page.
-##### 7. You will see a result on result page.
+##### 6. Create your task in HelloWorld task page.
+##### 7. Your local python process will fetch a task and process it.
+##### 8. When the task finished, result will show on the page 
 
 ## Run your own App
 ##### 1. Create a app then setup inputs and outputs on website.
@@ -42,7 +43,7 @@ class CustomTask(ITaskProcess):
 from your_python_file import CustomTask
 from dg_ai_platform.dg_platform import CaldronAI
 
-ca = CaldronAI(#pid#, #public_key#, CustomTask)
+ca = CaldronAI(CustomTask, pid="xxxx", public_key="xxxx")
 ca.run()
 ```
 ##### 5. Create your custom task on website.

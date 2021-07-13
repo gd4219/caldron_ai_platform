@@ -13,7 +13,7 @@ class ITaskProcess:
         raise RuntimeError('You need overwrite inference function')
 
 class CaldronAI:
-    def __init__(self, pid, public_key, task_class, output_dir='output'):
+    def __init__(self, task_class, pid, public_key, output_dir='output'):
         self.pid = pid
         self.p_key = public_key
         self.output_dir = output_dir
