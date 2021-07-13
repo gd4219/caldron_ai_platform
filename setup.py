@@ -11,7 +11,7 @@ setuptools.setup(
     description="A AI container platform.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/gd4219/test_pip_pck",
+    url="https://github.com/gd4219/caldron_ai_platform",
     packages=setuptools.find_packages(),
     install_requires = ['oss2', 'pillow'],
     #                    'keras>=2.4.3'],
