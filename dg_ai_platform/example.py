@@ -1,7 +1,7 @@
 from dg_ai_platform.dg_platform import ITaskProcess
 from PIL import Image, ImageOps
 
-class ExampleTask(ITaskProcess):
+class HelloWorld(ITaskProcess):
     def __init__(self):
         super().__init__()
 
@@ -12,7 +12,7 @@ class ExampleTask(ITaskProcess):
 
 
 
-class ExampleTask21(ITaskProcess):
+class HelloWorld21(ITaskProcess):
     def __init__(self):
         super().__init__()
 

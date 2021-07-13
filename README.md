@@ -1,6 +1,6 @@
 # Caldron AI platform
 
-version 0.1.8
+version 0.1.13
 
 
 ## How to run hello world demo
@@ -10,10 +10,10 @@ version 0.1.8
 ##### 4. Paste below code to a blank python file and change #pid# to your demo PID.
 ##### 5. run this python file.
 ```bash 
-from dg_ai_platform.example import ExampleTask
+from dg_ai_platform.example import HelloWorld
 from dg_ai_platform.dg_platform import CaldronAI
 
-ca = CaldronAI(#pid#, #public_key#, ExampleTask)
+ca = CaldronAI(#pid#, #public_key#, HelloWorld)
 ca.run()
 ```
 ##### 6. Create your task in demo task page.
