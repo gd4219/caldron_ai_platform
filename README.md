@@ -4,6 +4,8 @@ version 0.1.13
 
 ## System Architecture
 <p align="center"><img src="https://raw.githubusercontent.com/gd4219/caldron_ai_platform/master/images/sequence01.jpeg" width="500"  /></p>
+
+
 ## How to run hello world demo
 ##### 1. pip install dg-ai-platform.
 ##### 2. Login to Caldron AI platform website.
