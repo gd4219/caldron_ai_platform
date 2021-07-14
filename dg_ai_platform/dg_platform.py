@@ -70,11 +70,17 @@ class CaldronAI:
                         output_types[i] = 'mp4'
                     output_fn = os.path.join(self.output_dir, f"{task_id}_{i}.{output_types[i]}")
                     output_list.append(output_fn)
-                self.task_obj.inference(local_input_list, output_list, options)
+                try:
+                    self.task_obj.inference(local_input_list, output_list, options)
+                except Exception as e:
+                    print('inference exception:', e)
                 self.update_task_state(task_id, STATE_INFERENCE_DONE)
-                output_urls = self.file_upload(output_list)
-                self.clean_local_cache(local_input_list, output_list)
-                self.task_done(task_id, output_urls)
+                try:
+                    output_urls = self.file_upload(output_list)
+                    self.clean_local_cache(local_input_list, output_list)
+                    self.task_done(task_id, output_urls)
+                except Exception as e:
+                    print("upload state error:", e)
             else:
                 print('no task')
         except ConnectionError as e:
@@ -130,9 +136,12 @@ class CaldronAI:
 
     def get_input_local(self, id, inputs):
         local_inputs = []
-        for fn, i in zip(inputs, range(len(inputs))):
-            ext = os.path.splitext(fn)[1]
-            local_inputs.append( os.path.join(self.temp_dir, f"{id}_{i}{ext}") )
+        try:
+            for fn, i in zip(inputs, range(len(inputs))):
+                ext = os.path.splitext(fn)[1]
+                local_inputs.append( os.path.join(self.temp_dir, f"{id}_{i}{ext}") )
+        except Exception as e:
+            print("get_input_local: ", e)
         return local_inputs
 
     def update_task_state(self, task_id, state_code):
