@@ -8,6 +8,10 @@ UPDATE_TASK = SERVER_URL + "updateTask"
 COMMIT_TASK = SERVER_URL + "finishTask"
 GET_CONF = SERVER_URL + "upload/config"
 
+STATE_DOWNLOAD_DONE = 1
+STATE_INFERENCE_DONE = 2
+STATE_TASK_DONE = 7
+
 class ITaskProcess:
     def inference(self, input_list, output_list, options=None):
         raise RuntimeError('You need overwrite inference function')
@@ -67,7 +71,7 @@ class CaldronAI:
                     output_fn = os.path.join(self.output_dir, f"{task_id}_{i}.{output_types[i]}")
                     output_list.append(output_fn)
                 self.task_obj.inference(local_input_list, output_list, options)
-                self.update_task_state(task_id, 2)
+                self.update_task_state(task_id, STATE_INFERENCE_DONE)
                 output_urls = self.file_upload(output_list)
                 self.clean_local_cache(local_input_list, output_list)
                 self.task_done(task_id, output_urls)
@@ -88,7 +92,7 @@ class CaldronAI:
                         file.write(req.content)
                 else:
                     print('file was exists')
-            self.update_task_state(id, 1)
+            self.update_task_state(id, STATE_DOWNLOAD_DONE)
         except Exception as e:
             print(e)
 
@@ -143,7 +147,7 @@ class CaldronAI:
 
     def task_done(self, task_id, output_urls):
         print('task_done:', output_urls)
-        p_data = {"pid":self.pid, "taskid": task_id, "phase":7, "output_url": output_urls }
+        p_data = {"pid":self.pid, "taskid": task_id, "phase":STATE_TASK_DONE, "output_url": output_urls }
         b64 = get_b64(json.dumps(p_data))
         try:
             response = requests.post(COMMIT_TASK, data=b64)
