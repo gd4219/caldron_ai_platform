@@ -84,7 +84,9 @@ class CaldronAI:
             else:
                 print('no task')
         except ConnectionError as e:
-            print('error:', e)
+            print('ConnectionError:', e)
+        except json.decoder.JSONDecodeError as e:
+            print("JSONDecodeError:", e)
 
     def file_download(self, id, inputs):
         try:
