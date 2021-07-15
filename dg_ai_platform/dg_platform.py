@@ -8,6 +8,10 @@ UPDATE_TASK = SERVER_URL + "updateTask"
 COMMIT_TASK = SERVER_URL + "finishTask"
 GET_CONF = SERVER_URL + "upload/config"
 
+STATE_DOWNLOAD_DONE = 1
+STATE_INFERENCE_DONE = 2
+STATE_TASK_DONE = 7
+
 class ITaskProcess:
     def inference(self, input_list, output_list, options=None):
         raise RuntimeError('You need overwrite inference function')
@@ -66,11 +70,17 @@ class CaldronAI:
                         output_types[i] = 'mp4'
                     output_fn = os.path.join(self.output_dir, f"{task_id}_{i}.{output_types[i]}")
                     output_list.append(output_fn)
-                self.task_obj.inference(local_input_list, output_list, options)
-                self.update_task_state(task_id, 2)
-                output_urls = self.file_upload(output_list)
-                self.clean_local_cache(local_input_list, output_list)
-                self.task_done(task_id, output_urls)
+                try:
+                    self.task_obj.inference(local_input_list, output_list, options)
+                except Exception as e:
+                    print('inference exception:', e)
+                self.update_task_state(task_id, STATE_INFERENCE_DONE)
+                try:
+                    output_urls = self.file_upload(output_list)
+                    self.clean_local_cache(local_input_list, output_list)
+                    self.task_done(task_id, output_urls)
+                except Exception as e:
+                    print("upload state error:", e)
             else:
                 print('no task')
         except ConnectionError as e:
@@ -88,7 +98,7 @@ class CaldronAI:
                         file.write(req.content)
                 else:
                     print('file was exists')
-            self.update_task_state(id, 1)
+            self.update_task_state(id, STATE_DOWNLOAD_DONE)
         except Exception as e:
             print(e)
 
@@ -126,9 +136,12 @@ class CaldronAI:
 
     def get_input_local(self, id, inputs):
         local_inputs = []
-        for fn, i in zip(inputs, range(len(inputs))):
-            ext = os.path.splitext(fn)[1]
-            local_inputs.append( os.path.join(self.temp_dir, f"{id}_{i}{ext}") )
+        try:
+            for fn, i in zip(inputs, range(len(inputs))):
+                ext = os.path.splitext(fn)[1]
+                local_inputs.append( os.path.join(self.temp_dir, f"{id}_{i}{ext}") )
+        except Exception as e:
+            print("get_input_local: ", e)
         return local_inputs
 
     def update_task_state(self, task_id, state_code):
@@ -143,7 +156,7 @@ class CaldronAI:
 
     def task_done(self, task_id, output_urls):
         print('task_done:', output_urls)
-        p_data = {"pid":self.pid, "taskid": task_id, "phase":7, "output_url": output_urls }
+        p_data = {"pid":self.pid, "taskid": task_id, "phase":STATE_TASK_DONE, "output_url": output_urls }
         b64 = get_b64(json.dumps(p_data))
         try:
             response = requests.post(COMMIT_TASK, data=b64)
