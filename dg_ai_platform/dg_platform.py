@@ -63,19 +63,24 @@ class CaldronAI:
                 output_num = len(output_types)
                 output_list = []
                 local_input_list = self.get_input_local(task_id, input_list)
+                d_outputs = None
                 for i in range(output_num):
                     if output_types[i] == 'image':
                         output_types[i] = 'jpg'
                     elif output_types[i] == 'video':
                         output_types[i] = 'mp4'
+                    elif output_types[i] == 'audio':
+                        output_types[i] = 'mp3'
                     output_fn = os.path.join(self.output_dir, f"{task_id}_{i}.{output_types[i]}")
                     output_list.append(output_fn)
                 try:
-                    self.task_obj.inference(local_input_list, output_list, options)
+                    d_outputs = self.task_obj.inference(local_input_list, output_list, options)
                 except Exception as e:
                     print('inference exception:', e)
                 self.update_task_state(task_id, STATE_INFERENCE_DONE)
                 try:
+                    if d_outputs is not None:
+                        output_list.extend(d_outputs)
                     output_urls = self.file_upload(output_list)
                     self.clean_local_cache(local_input_list, output_list)
                     self.task_done(task_id, output_urls)
