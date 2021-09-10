@@ -1,12 +1,12 @@
 import time, requests, os, json
 import oss2
-from dg_ai_platform.utils import get_b64
+from dg_ai_platform.utils import get_b64_md5
 
-SERVER_URL = "http://app-dev.bigwinepot.com/openapi/public/"
-PULL_TASK =  SERVER_URL + "getTask"
-UPDATE_TASK = SERVER_URL + "updateTask"
-COMMIT_TASK = SERVER_URL + "finishTask"
-GET_CONF = SERVER_URL + "upload/config"
+SERVER_URL = "http://app-dev.bigwinepot.com:8801"
+PULL_TASK =  SERVER_URL + "/Caldron/task/getTask"
+UPDATE_TASK = SERVER_URL + "/Caldron/task/updateTask"
+COMMIT_TASK = SERVER_URL + "/Caldron/task/finishTask"
+GET_CONF = SERVER_URL + "/Caldron/task/signedUrl"
 
 STATE_DOWNLOAD_DONE = 1
 STATE_INFERENCE_DONE = 2
@@ -48,14 +48,14 @@ class CaldronAI:
             time.sleep(5)
 
     def pull_task(self):
-        p_data = {"pid":self.pid }
-        b64 = get_b64(json.dumps(p_data))
+        b64, md5_s = get_b64_md5(PULL_TASK, None, self.p_key)
+        headers = {"token":self.pid, "md5":md5_s}
         try:
-            response = requests.post(PULL_TASK, data=b64)
+            response = requests.post(PULL_TASK, data=b64, headers=headers)
             task_data = response.json()
             # print(task_data)
             if ('code' in task_data) and (task_data['code'] != -1) and (task_data['code'] != 1):
-                input_list = task_data['data']['input_url']
+                input_list = task_data['data']['inputs']
                 task_id = task_data['data']['id']
                 options = task_data['data']['options']
                 self.file_download(task_id, input_list)
@@ -65,12 +65,14 @@ class CaldronAI:
                 local_input_list = self.get_input_local(task_id, input_list)
                 d_outputs = None
                 for i in range(output_num):
-                    if output_types[i] == 'image':
+                    if output_types[i] == '1':
                         output_types[i] = 'jpg'
-                    elif output_types[i] == 'video':
+                    elif output_types[i] == '2':
                         output_types[i] = 'mp4'
-                    elif output_types[i] == 'audio':
+                    elif output_types[i] == '3':
                         output_types[i] = 'mp3'
+                    elif output_types[i] == '4':
+                        output_types[i] = 'txt'
                     output_fn = os.path.join(self.output_dir, f"{task_id}_{i}.{output_types[i]}")
                     output_list.append(output_fn)
                 try:
@@ -96,6 +98,7 @@ class CaldronAI:
     def file_download(self, id, inputs):
         try:
             for fn, i in zip(inputs, range(len(inputs)) ):
+                fn = fn["url"]
                 ext = os.path.splitext(fn)[1]
                 local_fn = os.path.join(self.temp_dir, f"{id}_{i}{ext}")
                 if not os.path.exists(local_fn):
@@ -113,10 +116,13 @@ class CaldronAI:
         keys = []
         for fn in outputs:
             keys.append(f'{os.path.basename(fn)}')
-        p_data = {"pid": self.pid, "filenames":keys}
-        b64 = get_b64(json.dumps(p_data))
-        response = requests.post(GET_CONF, data=b64)
-        sign_urls = response.json()['data'][0]
+        # p_data = {"pid": self.pid, "filenames":keys}
+        p_data = {"url":keys}
+        # b64 = get_b64(json.dumps(p_data))
+        b64, md5_s = get_b64_md5(GET_CONF, p_data, self.p_key)
+        headers = {"token":self.pid, "md5":md5_s}
+        response = requests.post(GET_CONF, data=b64, headers=headers)
+        sign_urls = response.json()['data']
         file_urls = []
         for fn, sign_url in zip(outputs, sign_urls):
             server_url = sign_url[:sign_url.rfind('?')]
@@ -145,6 +151,7 @@ class CaldronAI:
         local_inputs = []
         try:
             for fn, i in zip(inputs, range(len(inputs))):
+                fn = fn["url"]
                 ext = os.path.splitext(fn)[1]
                 local_inputs.append( os.path.join(self.temp_dir, f"{id}_{i}{ext}") )
         except Exception as e:
@@ -152,21 +159,25 @@ class CaldronAI:
         return local_inputs
 
     def update_task_state(self, task_id, state_code):
-        p_data = {"pid":self.pid, "taskid": task_id, "phase":state_code}
-        b64 = get_b64(json.dumps(p_data))
+        p_data = {"id": task_id, "status":state_code}
+        b64, md5_s = get_b64_md5(UPDATE_TASK, p_data, self.p_key)
+        headers = {"token":self.pid, "md5":md5_s}
         try:
-            response = requests.post(UPDATE_TASK, data=b64)
+            response = requests.post(UPDATE_TASK, data=b64, headers=headers)
             result_code = response.text
-            print(result_code)
+            print("update_task_state:", result_code)
         except Exception as e:
             print(e)
 
     def task_done(self, task_id, output_urls):
         print('task_done:', output_urls)
-        p_data = {"pid":self.pid, "taskid": task_id, "phase":STATE_TASK_DONE, "output_url": output_urls }
-        b64 = get_b64(json.dumps(p_data))
+        # p_data = {"pid":self.pid, "taskid": task_id, "phase":STATE_TASK_DONE, "output_url": output_urls }
+        p_data = {"id": task_id, "status":STATE_TASK_DONE, "url": output_urls }
+        # b64 = get_b64(json.dumps(p_data))
+        b64, md5_s = get_b64_md5(COMMIT_TASK, p_data, self.p_key)
+        headers = {"token": self.pid, "md5": md5_s}
         try:
-            response = requests.post(COMMIT_TASK, data=b64)
+            response = requests.post(COMMIT_TASK, data=b64, headers=headers)
             result_code = response.text
             print(result_code)
         except Exception as e:
