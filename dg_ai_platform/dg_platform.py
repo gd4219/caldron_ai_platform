@@ -83,9 +83,9 @@ class CaldronAI:
                 try:
                     if d_outputs is not None:
                         output_list.extend(d_outputs)
-                    output_urls = self.file_upload(output_list)
+                    output_urls, size_list = self.file_upload(output_list)
                     self.clean_local_cache(local_input_list, output_list)
-                    self.task_done(task_id, output_urls)
+                    self.task_done(task_id, output_urls, size_list)
                 except Exception as e:
                     print("upload state error:", e)
             else:
@@ -124,7 +124,9 @@ class CaldronAI:
         response = requests.post(GET_CONF, data=b64, headers=headers)
         sign_urls = response.json()['data']
         file_urls = []
+        file_size_list = []
         for fn, sign_url in zip(outputs, sign_urls):
+            f_size = os.path.getsize(fn)
             server_url = sign_url[:sign_url.rfind('?')]
             print('upload to cloud', fn, '-->', server_url)
             try:
@@ -132,11 +134,12 @@ class CaldronAI:
                 self.bucket.put_object_with_url_from_file(sign_url, fn)
                 # if (self.bucket.object_exists(target_path)):
                 file_urls.append(server_url)
+                file_size_list.append(f_size)
             except Exception as e:
                 print('upload error:', e)
         if len(file_urls) != len(outputs):
             raise RuntimeError('Some file upload failed.')
-        return file_urls
+        return file_urls, file_size_list
 
     def clean_local_cache(self, local_inputs, outputs):
         print('clean local files')
@@ -169,10 +172,10 @@ class CaldronAI:
         except Exception as e:
             print(e)
 
-    def task_done(self, task_id, output_urls):
+    def task_done(self, task_id, output_urls, size_list):
         print('task_done:', output_urls)
         # p_data = {"pid":self.pid, "taskid": task_id, "phase":STATE_TASK_DONE, "output_url": output_urls }
-        p_data = {"id": task_id, "status":STATE_TASK_DONE, "url": output_urls }
+        p_data = {"id": task_id, "status":STATE_TASK_DONE, "url": output_urls , "TaskOutputParameterSize":size_list}
         # b64 = get_b64(json.dumps(p_data))
         b64, md5_s = get_b64_md5(COMMIT_TASK, p_data, self.p_key)
         headers = {"token": self.pid, "md5": md5_s}
