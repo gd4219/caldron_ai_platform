@@ -2,7 +2,7 @@ import time, requests, os, json
 import oss2
 from dg_ai_platform.utils import get_b64_md5
 
-SERVER_URL = "https://openai.bigwinepot.com"
+SERVER_URL = "https://cai.bigwinepot.com"
 PULL_TASK =  SERVER_URL + "/Caldron/task/getTask"
 UPDATE_TASK = SERVER_URL + "/Caldron/task/updateTask"
 COMMIT_TASK = SERVER_URL + "/Caldron/task/finishTask"
